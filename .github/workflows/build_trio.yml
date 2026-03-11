@@ -1,34 +1,21 @@
-name: 4. Build Trio
-run-name: Build Trio (${{ github.ref_name }})
-on:
-  workflow_dispatch:
-
-jobs:
-  build:
-    name: Build
-    runs-on: macos-15
-    permissions:
-      contents: write
-    steps:
-      - name: Select Xcode version
-        run: "sudo xcode-select --switch /Applications/Xcode_16.3.app/Contents/Developer"
-      
-      - name: Checkout Repo
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GH_PAT }}
-          submodules: recursive
-          ref: ${{ github.ref_name }}
-
-      - name: Install Project Dependencies
-        run: bundle install
-
-      - name: Build Unsigned IPA
+- name: Build Unsigned IPA
         run: |
-          xcodebuild archive -workspace Trio.xcworkspace -scheme Trio -archivePath build/Trio.xcarchive CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+          # The -destination is the key fix for Error 70
+          xcodebuild archive \
+            -workspace Trio.xcworkspace \
+            -scheme Trio \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/Trio.xcarchive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_ENTITLEMENTS="" \
+            CODE_SIGNING_METHOD=manual
+
+          # Create the IPA structure manually
           mkdir -p build/Payload
-          cp -r build/Trio.xcarchive/Products/Applications/*.app build/Payload
-          cd build && zip -r Trio.ipa Payload
+          cp -r build/Trio.xcarchive/Products/Applications/*.app build/Payload/
+          cd build && zip -r Trio.ipa Payload/
 
       - name: Upload Build artifacts
         if: always()
