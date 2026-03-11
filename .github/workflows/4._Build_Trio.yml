@@ -12,8 +12,10 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_16.3.app
+      - name: Install iOS 18.4 Runtime
+        run: |
+          sudo xcode-select -s /Applications/Xcode_16.3.app
+          xcodebuild -downloadPlatform iOS -buildVersion 18.4
 
       - name: Build Unsigned IPA
         run: |
